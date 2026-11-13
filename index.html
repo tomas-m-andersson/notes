@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e8f2fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101a28" media="(prefers-color-scheme: dark)">
+<title>Notes</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-maskable-512.png">
+<script>try{var t=localStorage.getItem("notes-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<style>
+:root{--bg:#e8f2fb;--card:#ffffff;--ink:#1a2433;--mut:#5a6b80;--line:#cfdcea;--acc:#2563d6;--accink:#ffffff;--helg:#ffd84d;--helgink:#3a2c00;--danger:#b4232a;--ok:#2f9e5b;
+  --f-standard:var(--card);--f-rod:#faafa8;--f-orange:#f8c9a4;--f-gul:#fff3a8;--f-gron:#d9f2c7;--f-blagron:#bfe5dc;--f-bla:#cfe2f3;--f-lila:#ddd0ec;--f-rosa:#f8dde4;--f-brun:#e9e1d1;--f-gra:#e6eaf0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101a28;--card:#1a2638;--ink:#eaf1fb;--mut:#9fb1c8;--line:#2b3b52;--acc:#7aa8ff;--accink:#0a1a38;--helg:#e0b92f;--helgink:#241b00;--danger:#ff8a8f;--ok:#6fd39a;
+  --f-rod:#5c2430;--f-orange:#5c3520;--f-gul:#5a4a12;--f-gron:#24432f;--f-blagron:#1b4a46;--f-bla:#1f3d56;--f-lila:#3a2d52;--f-rosa:#4f2c3e;--f-brun:#423a2e;--f-gra:#2c3542}}
+:root[data-theme="dark"]{--bg:#101a28;--card:#1a2638;--ink:#eaf1fb;--mut:#9fb1c8;--line:#2b3b52;--acc:#7aa8ff;--accink:#0a1a38;--helg:#e0b92f;--helgink:#241b00;--danger:#ff8a8f;--ok:#6fd39a;
+  --f-rod:#5c2430;--f-orange:#5c3520;--f-gul:#5a4a12;--f-gron:#24432f;--f-blagron:#1b4a46;--f-bla:#1f3d56;--f-lila:#3a2d52;--f-rosa:#4f2c3e;--f-brun:#423a2e;--f-gra:#2c3542}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 ui-rounded,"SF Pro Rounded","Nunito","Segoe UI",system-ui,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:1100px;margin:0 auto;padding:28px 18px 64px}
+button,input,textarea{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* Topp */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:clamp(2.4rem,9vw,3.6rem);line-height:1;margin:0;font-weight:800;letter-spacing:-.02em;color:var(--acc)}
+.sub{margin:6px 2px 0;font-size:.92rem;font-weight:700;color:var(--mut)}
+.sub .fel{color:var(--danger)}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;flex:none}
+.icon-btn svg{width:22px;height:22px}
+body.last #innehall,body.last .bara-upplast,body.last h1,body.last .sub{display:none}
+body.last .top{justify-content:flex-end}
+
+/* Sök och flikar */
+.verktyg{display:flex;gap:10px;align-items:center;margin:22px 0 0;flex-wrap:wrap}
+.sok{flex:1 1 240px;display:flex;align-items:center;gap:8px;background:var(--card);border-radius:999px;box-shadow:0 2px 0 var(--line);padding:0 16px;height:48px}
+.sok svg{width:20px;height:20px;color:var(--mut);flex:none}
+.sok input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:1rem}
+.flikar{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--card);box-shadow:0 2px 0 var(--line)}
+.flikar button{height:40px;padding:0 16px;border:0;border-radius:999px;background:transparent;color:var(--mut);font-weight:700;cursor:pointer}
+.flikar button[aria-pressed="true"]{background:var(--acc);color:var(--accink);font-weight:800}
+
+/* Skriv ny */
+.ny{max-width:600px;margin:22px auto 6px;display:flex;align-items:center;gap:6px;background:var(--card);border-radius:24px;box-shadow:0 2px 0 var(--line);padding:6px 6px 6px 20px}
+.ny .skriv{flex:1;text-align:left;border:0;background:transparent;color:var(--mut);font-weight:700;padding:12px 0;cursor:text}
+.ny .ikon{width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:var(--mut);display:grid;place-items:center;cursor:pointer}
+.ny .ikon svg{width:22px;height:22px}
+
+/* Lista med anteckningar (murverk som i Keep) */
+.rub{margin:30px 6px 10px;font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.mur{columns:2 170px;column-gap:12px}
+@media (min-width:700px){.mur{columns:3 200px}}
+@media (min-width:1000px){.mur{columns:4 220px}}
+.lapp{break-inside:avoid;display:block;width:100%;margin:0 0 12px;text-align:left;border:0;border-radius:20px;background:var(--fc,var(--card));box-shadow:0 2px 0 var(--line);padding:14px 16px;cursor:pointer;position:relative;color:var(--ink)}
+.lapp.std{box-shadow:0 0 0 2px var(--line) inset,0 2px 0 var(--line)}
+.lapp b.t{display:block;font-weight:800;font-size:1.02rem;line-height:1.3;margin-right:22px;overflow-wrap:anywhere}
+.lapp .x{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem;line-height:1.45;margin-top:4px;display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;overflow:hidden}
+.lapp b.t + .x{margin-top:6px}
+.lapp .nal{position:absolute;top:12px;right:12px;width:18px;height:18px;color:var(--mut)}
+.lapp ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:3px}
+.lapp li{display:flex;gap:8px;align-items:flex-start;font-size:.95rem;line-height:1.35;overflow-wrap:anywhere}
+.lapp li .box{width:16px;height:16px;border:2px solid currentColor;border-radius:5px;flex:none;margin-top:2px;opacity:.7}
+.lapp li.klar{color:var(--mut);text-decoration:line-through}
+.lapp li.klar .box{background:currentColor}
+.lapp .mer{font-size:.8rem;font-weight:700;color:var(--mut);margin-top:6px}
+.lapp .tom{color:var(--mut);font-style:italic}
+.tomt{text-align:center;color:var(--mut);font-weight:700;padding:48px 10px}
+
+/* Dialoger */
+dialog{border:0;border-radius:24px;padding:0;width:min(94vw,600px);max-height:min(88vh,800px);background:var(--card);color:var(--ink);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+#redDlg{background:var(--fc,var(--card))}
+#redDlg form{display:flex;flex-direction:column;max-height:min(88vh,800px)}
+.red-kropp{padding:18px 20px 8px;overflow:auto;flex:1}
+.red-topp{display:flex;align-items:flex-start;gap:8px}
+.red-titel{flex:1;border:0;background:transparent;font-weight:800;font-size:1.25rem;outline:none;padding:6px 0}
+.red-text{width:100%;border:0;background:transparent;outline:none;resize:none;min-height:160px;font-size:1rem;line-height:1.5;padding:6px 0;overflow:hidden}
+.red-lista{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px}
+.red-lista li{display:flex;align-items:center;gap:6px}
+.red-lista li.klar input[type=text]{text-decoration:line-through;color:var(--mut)}
+.red-lista input[type=text]{flex:1;min-width:0;border:0;background:transparent;outline:none;padding:8px 0;font-size:1rem}
+.red-lista input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc);flex:none;cursor:pointer}
+.red-lista .bort{width:36px;height:36px;border:0;background:transparent;color:var(--mut);border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none}
+.red-lista .bort svg{width:18px;height:18px}
+.klara-rub{margin:12px 0 2px;font-size:.82rem;font-weight:800;color:var(--mut)}
+.ny-punkt{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--mut);font-weight:700;padding:10px 0;cursor:pointer}
+.ny-punkt svg{width:20px;height:20px}
+.andrad{font-size:.8rem;font-weight:700;color:var(--mut);text-align:right;margin:8px 0 0}
+.red-fot{display:flex;align-items:center;gap:4px;padding:10px 12px;border-top:1px solid color-mix(in srgb,var(--ink) 12%,transparent);flex-wrap:wrap}
+.red-fot .ikon{width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.red-fot .ikon svg{width:22px;height:22px}
+.red-fot .ikon[aria-pressed="true"]{background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.red-fot .klar-knapp{margin-left:auto;height:44px;padding:0 22px;border:0;border-radius:999px;background:var(--acc);color:var(--accink);font-weight:800;cursor:pointer}
+.farger{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+.farger button{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);background:var(--sw);cursor:pointer;padding:0}
+.farger button[aria-pressed="true"]{outline:3px solid var(--acc);outline-offset:2px}
+
+#instDlg{padding:20px;width:min(92vw,440px)}
+#instDlg h3{margin:0 0 4px;font-weight:800;font-size:1.3rem}
+.sek{margin-top:22px}
+.sek h4{margin:0 0 8px;font-size:.95rem;font-weight:800}
+.hint{color:var(--mut);font-size:.88rem;margin:0 0 10px}
+.seg{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--bg)}
+.seg button{flex:1;height:44px;border:0;border-radius:999px;background:transparent;color:var(--mut);font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);color:var(--accink);font-weight:800}
+.falt{width:100%;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:11px 18px}
+.knapp{margin-top:10px;width:100%;height:46px;border:0;border-radius:999px;background:var(--acc);color:var(--accink);font-weight:800;cursor:pointer}
+.knapp.ljus{background:var(--card);color:var(--ink);border:2px solid var(--line);font-weight:700}
+.knapp:disabled{opacity:.6;cursor:default}
+.status{margin:10px 4px 0;font-size:.88rem;font-weight:700;color:var(--mut);min-height:1.3em}
+.status.fel{color:var(--danger)}
+.status.ok{color:var(--ok)}
+.close{margin-top:22px;width:100%;height:46px;border:0;border-radius:999px;background:var(--acc);color:var(--accink);font-weight:800;cursor:pointer}
+.notis{max-width:600px;margin:18px auto 0;background:var(--helg);color:var(--helgink);border-radius:20px;padding:12px 16px;font-size:.9rem;font-weight:600}
+
+/* Meddelande längst ner */
+#msg{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:80;max-width:min(92vw,520px);display:flex;align-items:center;gap:14px;
+  padding:10px 10px 10px 18px;border-radius:20px;background:var(--ink);color:var(--bg);font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+#msg button{border:0;background:transparent;color:var(--bg);font-weight:800;text-decoration:underline;cursor:pointer;padding:6px 8px}
+</style>
+</head>
+<body class="last">
+<main>
+  <div class="top">
+    <h1>Notes</h1>
+    <button class="icon-btn" id="setBtn" type="button" aria-label="Inställningar" title="Inställningar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
+  <p class="sub" id="synk"></p>
+
+  <div id="innehall">
+    <div class="notis" id="notis" hidden></div>
+
+    <div class="verktyg">
+      <label class="sok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="sok" type="search" placeholder="Sök i anteckningar" autocomplete="off" aria-label="Sök"></label>
+      <div class="flikar" id="flikar">
+        <button type="button" data-vy="alla" aria-pressed="true">Anteckningar</button>
+        <button type="button" data-vy="arkiv" aria-pressed="false">Arkiv</button>
+      </div>
+    </div>
+
+    <div class="ny" id="nyRuta">
+      <button type="button" class="skriv" id="nyText">Skriv en anteckning…</button>
+      <button type="button" class="ikon" id="nyLista" aria-label="Ny lista" title="Ny lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg></button>
+    </div>
+
+    <div id="lista"></div>
+  </div>
+</main>
+
+<!-- Redigera anteckning -->
+<dialog id="redDlg">
+  <form method="dialog" id="redForm">
+    <div class="red-kropp">
+      <div class="red-topp">
+        <input class="red-titel" id="redTitel" placeholder="Titel" autocomplete="off">
+      </div>
+      <textarea class="red-text" id="redText" placeholder="Anteckning"></textarea>
+      <div id="redListaRuta" hidden>
+        <ul class="red-lista" id="redOklara"></ul>
+        <button type="button" class="ny-punkt" id="nyPunkt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Lägg till punkt</button>
+        <p class="klara-rub" id="klaraRub" hidden></p>
+        <ul class="red-lista" id="redKlara"></ul>
+      </div>
+      <p class="andrad" id="redAndrad"></p>
+    </div>
+    <div class="farger" id="farger" hidden></div>
+    <div class="red-fot">
+      <button type="button" class="ikon" id="redFast" aria-label="Fäst" title="Fäst" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg></button>
+      <button type="button" class="ikon" id="redFarg" aria-label="Färg" title="Färg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg></button>
+      <button type="button" class="ikon" id="redTyp" aria-label="Växla mellan text och lista" title="Text eller lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg></button>
+      <button type="button" class="ikon" id="redArkiv" aria-label="Arkivera" title="Arkivera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/></svg></button>
+      <button type="button" class="ikon" id="redBort" aria-label="Ta bort" title="Ta bort"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>
+      <button type="submit" class="klar-knapp">Klar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Inställningar -->
+<dialog id="instDlg">
+  <h3>Inställningar</h3>
+  <div class="sek bara-upplast">
+    <h4>Tema</h4>
+    <div class="seg" id="tema">
+      <button type="button" data-t="auto">Auto</button>
+      <button type="button" data-t="light">Ljust</button>
+      <button type="button" data-t="dark">Mörkt</button>
+    </div>
+  </div>
+  <div class="sek">
+    <h4>GitHub-token</h4>
+    <div id="tokenNy">
+      <p class="hint">Klistra in din token och tryck på Spara token. Utan rätt token visas inga anteckningar.</p>
+      <input class="falt" id="tokenFalt" type="password" placeholder="github_pat_..." autocomplete="off" spellcheck="false">
+      <button class="knapp" id="tokenSpara" type="button">Spara token</button>
+    </div>
+    <div id="tokenFinns" hidden>
+      <p class="hint">Din token är sparad på den här enheten. Anteckningar och inställningar sparas i det privata repot notes-data (filerna notes.json och installningar.json), så de blir likadana på alla dina enheter.</p>
+      <button class="knapp ljus" id="tokenTaBort" type="button">Ta bort token från den här enheten</button>
+    </div>
+    <p class="status" id="status"></p>
+  </div>
+  <button class="close" id="stang" type="button">Klar</button>
+</dialog>
+
+<div id="msg" role="status" hidden><span id="msgText"></span><button type="button" id="msgAngra" hidden>Ångra</button></div>
+
+<script>
+(function(){
+  var AGARE = 'tomas-m-andersson', DATAREPO = 'notes-data', NOTFIL = 'notes.json', INSTFIL = 'installningar.json';
+  var $ = function(id){ return document.getElementById(id); };
+  var LS = {
+    get: function(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+    set: function(k, v){ try { localStorage.setItem(k, v); } catch(e){} },
+    del: function(k){ try { localStorage.removeItem(k); } catch(e){} }
+  };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  function datumTid(ms){ var d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function tid(ms){ var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  var nyttId = function(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); };
+
+  var FARGER = [['standard','Standard'],['rod','Röd'],['orange','Orange'],['gul','Gul'],['gron','Grön'],['blagron','Blågrön'],['bla','Blå'],['lila','Lila'],['rosa','Rosa'],['brun','Brun'],['gra','Grå']];
+  var IKON_NAL = '<svg class="nal" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><rect x="11" y="13" width="2" height="8" rx="1"/></svg>';
+  var IKON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+
+  function status(text, typ){ var p = $('status'); p.textContent = text || ''; p.className = 'status' + (typ ? ' ' + typ : ''); }
+  function synkText(html){ $('synk').innerHTML = html || ''; }
+
+  var msgTimer = null;
+  function meddela(text, angra){
+    $('msgText').textContent = text;
+    var b = $('msgAngra');
+    b.hidden = !angra;
+    b.onclick = function(){ $('msg').hidden = true; if (angra) angra(); };
+    $('msg').hidden = false;
+    clearTimeout(msgTimer);
+    msgTimer = setTimeout(function(){ $('msg').hidden = true; }, 6000);
+  }
+
+  // ---------- GitHub ----------
+  var token = LS.get('notes-token') || (LS.get('notes-utloggad') === '1' ? null : LS.get('landing-token'));
+  function gh(url, opt){
+    opt = opt || {};
+    opt.cache = 'no-store';
+    opt.headers = Object.assign({ 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + token }, opt.headers || {});
+    return fetch('https://api.github.com' + url, opt);
+  }
+  var filUrl = function(fil){ return '/repos/' + AGARE + '/' + DATAREPO + '/contents/' + fil; };
+  var tillB64 = function(t){ return btoa(unescape(encodeURIComponent(t))); };
+  var franB64 = function(b){ return decodeURIComponent(escape(atob(String(b).replace(/\s/g, '')))); };
+
+  function kollaToken(){
+    return gh('/user').then(function(r){
+      if (r.status === 401 || r.status === 403) return 'fel';
+      if (!r.ok) return 'natfel';
+      return r.json().then(function(u){ return u && String(u.login).toLowerCase() === AGARE ? 'ok' : 'fel'; });
+    }).catch(function(){ return 'natfel'; });
+  }
+  // Hämtar en fil. Svar: {data, sha} eller {data:null, sha:null} om filen inte finns än.
+  function hamtaFil(fil){
+    return gh(filUrl(fil) + '?ref=main').then(function(r){
+      if (r.status === 404) {
+        return gh('/repos/' + AGARE + '/' + DATAREPO).then(function(r2){
+          if (r2.status === 404) { var e = new Error('ingetrepo'); e.ingetRepo = true; throw e; }
+          return { data: null, sha: null };
+        });
+      }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json().then(function(j){ return { data: JSON.parse(franB64(j.content)), sha: j.sha }; });
+    });
+  }
+  function sparaFil(fil, data, sha, meddelande){
+    var body = { message: meddelande, content: tillB64(JSON.stringify(data, null, 2) + '\n'), branch: 'main' };
+    if (sha) body.sha = sha;
+    return gh(filUrl(fil), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  }
+
+  // ---------- Anteckningar ----------
+  // Varje anteckning: {id, titel, text, lista:[{id,text,klar}]|null, farg, fast, arkiv, skapad, andrad, borttagen}
+  var notes = [];
+  try { notes = JSON.parse(LS.get('notes-cache') || '[]') || []; } catch(e){ notes = []; }
+  var smutsig = LS.get('notes-osparat') === '1';
+  var notSha = null;
+  var vy = 'alla';
+
+  function sparaLokalt(){ LS.set('notes-cache', JSON.stringify(notes)); }
+  // Slår ihop två listor: för varje anteckning vinner den som ändrats senast.
+  function slaIhop(a, b){
+    var m = {};
+    a.concat(b).forEach(function(n){ if (n && n.id && (!m[n.id] || (n.andrad || 0) > (m[n.id].andrad || 0))) m[n.id] = n; });
+    return Object.keys(m).map(function(k){ return m[k]; });
+  }
+
+  var sparTimer = null, sparar = false, sparaIgen = false;
+  function markeraAndrat(){
+    smutsig = true; LS.set('notes-osparat', '1'); sparaLokalt();
+    synkText('Sparar…');
+    clearTimeout(sparTimer);
+    sparTimer = setTimeout(sparaNotes, 900);
+  }
+  function sparaNotes(forsok){
+    if (sparar) { sparaIgen = true; return; }
+    sparar = true;
+    var data = { format: 1, uppdaterad: new Date().toISOString(), anteckningar: notes };
+    sparaFil(NOTFIL, data, notSha, 'Uppdatera anteckningar').then(function(r){
+      if (r.ok) return r.json().then(function(j){
+        notSha = j.content && j.content.sha;
+        smutsig = false; LS.del('notes-osparat');
+        synkText('Sparat ' + tid(Date.now()));
+      });
+      if ((r.status === 409 || r.status === 422) && (forsok || 0) < 2) {
+        // Ändrat från en annan enhet: hämta, slå ihop och spara igen.
+        return hamtaFil(NOTFIL).then(function(f){
+          notSha = f.sha;
+          if (f.data && Array.isArray(f.data.anteckningar)) notes = slaIhop(notes, f.data.anteckningar);
+          sparaLokalt(); rita();
+          sparar = false; return sparaNotes((forsok || 0) + 1);
+        });
+      }
+      if (r.status === 403 || r.status === 404) synkText('<span class="fel">Kunde inte spara: token saknar skrivrätt till repot notes-data.</span>');
+      else synkText('<span class="fel">Kunde inte spara (fel ' + r.status + '). Ändringarna finns kvar på den här enheten.</span>');
+    }).catch(function(){
+      synkText('<span class="fel">Inte sparat: ingen internetanslutning. Sparas när du är online igen.</span>');
+    }).then(function(){
+      sparar = false;
+      if (sparaIgen) { sparaIgen = false; sparaNotes(); }
+    });
+  }
+  function laddaNotes(){
+    synkText('Hämtar anteckningar…');
+    return hamtaFil(NOTFIL).then(function(f){
+      $('notis').hidden = true;
+      notSha = f.sha;
+      var fran = (f.data && Array.isArray(f.data.anteckningar)) ? f.data.anteckningar : [];
+      notes = smutsig ? slaIhop(notes, fran) : fran;
+      sparaLokalt(); rita();
+      if (smutsig) sparaNotes(); else synkText('Uppdaterad ' + tid(Date.now()));
+    }).catch(function(e){
+      if (e && e.ingetRepo) {
+        $('notis').hidden = false;
+        $('notis').textContent = 'Hittar inte det privata repot notes-data. Skapa det på GitHub och ge din token åtkomst till det (Contents: Read and write). Tills dess sparas anteckningarna bara på den här enheten.';
+        synkText('<span class="fel">Inte kopplad till GitHub</span>');
+      } else {
+        synkText('<span class="fel">Kunde inte hämta från GitHub. Visar anteckningarna som finns på den här enheten.</span>');
+      }
+      rita();
+    });
+  }
+
+  // ---------- Visa anteckningar ----------
+  function matchar(n, q){
+    if (!q) return true;
+    var s = (n.titel || '') + ' ' + (n.text || '') + ' ' + (n.lista || []).map(function(p){ return p.text; }).join(' ');
+    return s.toLowerCase().indexOf(q) >= 0;
+  }
+  function lappHtml(n){
+    var std = !n.farg || n.farg === 'standard';
+    var h = '<button type="button" class="lapp' + (std ? ' std' : '') + '" data-id="' + esc(n.id) + '"' + (std ? '' : ' style="--fc:var(--f-' + esc(n.farg) + ')"') + '>';
+    if (n.fast) h += IKON_NAL;
+    if (n.titel) h += '<b class="t">' + esc(n.titel) + '</b>';
+    if (n.lista) {
+      var oklara = n.lista.filter(function(p){ return !p.klar && p.text; });
+      var klara = n.lista.filter(function(p){ return p.klar && p.text; });
+      var visa = oklara.slice(0, 8);
+      h += '<ul>' + visa.map(function(p){ return '<li><span class="box"></span><span>' + esc(p.text) + '</span></li>'; }).join('') + '</ul>';
+      var mer = [];
+      if (oklara.length > visa.length) mer.push((oklara.length - visa.length) + ' till');
+      if (klara.length) mer.push(klara.length + (klara.length === 1 ? ' klar punkt' : ' klara punkter'));
+      if (mer.length) h += '<div class="mer">+ ' + mer.join(', ') + '</div>';
+      if (!n.titel && !oklara.length && !klara.length) h += '<div class="x tom">Tom lista</div>';
+    } else if (n.text) {
+      h += '<div class="x">' + esc(n.text) + '</div>';
+    } else if (!n.titel) {
+      h += '<div class="x tom">Tom anteckning</div>';
+    }
+    return h + '</button>';
+  }
+  function rita(){
+    var q = $('sok').value.trim().toLowerCase();
+    var synliga = notes.filter(function(n){ return !n.borttagen && (vy === 'arkiv' ? n.arkiv : !n.arkiv) && matchar(n, q); });
+    synliga.sort(function(a, b){ return (b.andrad || 0) - (a.andrad || 0); });
+    $('nyRuta').hidden = vy === 'arkiv';
+    var h = '';
+    if (vy === 'arkiv') {
+      h = synliga.length ? '<div class="mur">' + synliga.map(lappHtml).join('') + '</div>' : '<p class="tomt">' + (q ? 'Inga träffar i arkivet.' : 'Arkivet är tomt.') + '</p>';
+    } else {
+      var fasta = synliga.filter(function(n){ return n.fast; }), ovriga = synliga.filter(function(n){ return !n.fast; });
+      if (fasta.length) h += '<p class="rub">Fästa</p><div class="mur">' + fasta.map(lappHtml).join('') + '</div>';
+      if (ovriga.length) h += (fasta.length ? '<p class="rub">Övriga</p>' : '<div style="height:18px"></div>') + '<div class="mur">' + ovriga.map(lappHtml).join('') + '</div>';
+      if (!synliga.length) h = '<p class="tomt">' + (q ? 'Inga träffar.' : 'Inga anteckningar än. Tryck på Skriv en anteckning för att börja.') + '</p>';
+    }
+    $('lista').innerHTML = h;
+    $('lista').querySelectorAll('.lapp').forEach(function(b){ b.onclick = function(){ oppna(b.dataset.id); }; });
+  }
+
+  $('sok').addEventListener('input', rita);
+  $('flikar').querySelectorAll('button').forEach(function(b){
+    b.onclick = function(){
+      vy = b.dataset.vy;
+      $('flikar').querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      rita();
+    };
+  });
+
+  // ---------- Redigera ----------
+  var red = null, redNy = false, redOrginal = '';
+  var dlg = $('redDlg');
+
+  function satFarg(f){
+    red.farg = f || 'standard';
+    if (red.farg === 'standard') dlg.style.removeProperty('--fc'); else dlg.style.setProperty('--fc', 'var(--f-' + red.farg + ')');
+    $('farger').querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.f === red.farg ? 'true' : 'false'); });
+  }
+  $('farger').innerHTML = FARGER.map(function(f){
+    return '<button type="button" data-f="' + f[0] + '" aria-label="' + f[1] + '" title="' + f[1] + '" style="--sw:' + (f[0] === 'standard' ? 'var(--card)' : 'var(--f-' + f[0] + ')') + '"></button>';
+  }).join('');
+  $('farger').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ satFarg(b.dataset.f); }; });
+  $('redFarg').onclick = function(){ $('farger').hidden = !$('farger').hidden; };
+
+  function vaxTextHojd(){ var t = $('redText'); t.style.height = 'auto'; t.style.height = Math.max(160, t.scrollHeight) + 'px'; }
+  $('redText').addEventListener('input', vaxTextHojd);
+
+  function ritaPunkter(fokusId){
+    var oklara = red.lista.filter(function(p){ return !p.klar; }), klara = red.lista.filter(function(p){ return p.klar; });
+    function rad(p){
+      return '<li class="' + (p.klar ? 'klar' : '') + '" data-id="' + p.id + '"><input type="checkbox"' + (p.klar ? ' checked' : '') + ' aria-label="Klar">' +
+        '<input type="text" value="' + esc(p.text) + '" placeholder="Punkt" aria-label="Punkt">' +
+        '<button type="button" class="bort" aria-label="Ta bort punkt">' + IKON_X + '</button></li>';
+    }
+    $('redOklara').innerHTML = oklara.map(rad).join('');
+    $('redKlara').innerHTML = klara.map(rad).join('');
+    $('klaraRub').hidden = !klara.length;
+    $('klaraRub').textContent = klara.length + (klara.length === 1 ? ' klar punkt' : ' klara punkter');
+    [$('redOklara'), $('redKlara')].forEach(function(ul){
+      ul.querySelectorAll('li').forEach(function(li){
+        var p = red.lista.find(function(x){ return x.id === li.dataset.id; });
+        var cb = li.querySelector('input[type=checkbox]'), tx = li.querySelector('input[type=text]');
+        cb.onchange = function(){ p.klar = cb.checked; ritaPunkter(); };
+        tx.oninput = function(){ p.text = tx.value; };
+        tx.onkeydown = function(e){
+          if (e.key === 'Enter') { e.preventDefault(); laggTillPunkt(p); }
+          if (e.key === 'Backspace' && !tx.value) {
+            e.preventDefault();
+            var i = red.lista.indexOf(p); red.lista.splice(i, 1);
+            var fore = red.lista.slice(0, i).filter(function(x){ return !x.klar; }).pop();
+            ritaPunkter(fore && fore.id);
+          }
+        };
+        li.querySelector('.bort').onclick = function(){ red.lista.splice(red.lista.indexOf(p), 1); ritaPunkter(); };
+      });
+    });
+    if (fokusId) { var f = dlg.querySelector('li[data-id="' + fokusId + '"] input[type=text]'); if (f) f.focus(); }
+  }
+  function laggTillPunkt(efter){
+    var p = { id: nyttId(), text: '', klar: false };
+    var i = efter ? red.lista.indexOf(efter) + 1 : red.lista.filter(function(x){ return !x.klar; }).length;
+    red.lista.splice(i, 0, p);
+    ritaPunkter(p.id);
+  }
+  $('nyPunkt').onclick = function(){
+    var oklara = red.lista.filter(function(x){ return !x.klar; });
+    laggTillPunkt(oklara[oklara.length - 1]);
+  };
+
+  function visaTyp(){
+    var arLista = !!red.lista;
+    $('redText').hidden = arLista; $('redListaRuta').hidden = !arLista;
+    $('redTyp').title = arLista ? 'Gör om till text' : 'Gör om till lista';
+    $('redTyp').setAttribute('aria-label', $('redTyp').title);
+    if (arLista) ritaPunkter(); else { $('redText').value = red.text || ''; vaxTextHojd(); }
+  }
+  $('redTyp').onclick = function(){
+    if (red.lista) {
+      red.text = red.lista.filter(function(p){ return p.text; }).map(function(p){ return p.text; }).join('\n');
+      red.lista = null;
+    } else {
+      red.text = $('redText').value;
+      red.lista = red.text.split('\n').map(function(t){ return t.trim(); }).filter(Boolean).map(function(t){ return { id: nyttId(), text: t, klar: false }; });
+      if (!red.lista.length) red.lista.push({ id: nyttId(), text: '', klar: false });
+      red.text = '';
+    }
+    visaTyp();
+  };
+  $('redFast').onclick = function(){ red.fast = !red.fast; $('redFast').setAttribute('aria-pressed', red.fast ? 'true' : 'false'); };
+
+  function oppna(id, somLista){
+    var n = id ? notes.find(function(x){ return x.id === id; }) : null;
+    redNy = !n;
+    red = n ? JSON.parse(JSON.stringify(n)) : { id: nyttId(), titel: '', text: '', lista: somLista ? [{ id: nyttId(), text: '', klar: false }] : null, farg: 'standard', fast: false, arkiv: false, skapad: Date.now(), andrad: Date.now() };
+    redOrginal = JSON.stringify(red);
+    $('redTitel').value = red.titel || '';
+    $('farger').hidden = true;
+    satFarg(red.farg);
+    $('redFast').setAttribute('aria-pressed', red.fast ? 'true' : 'false');
+    $('redArkiv').title = red.arkiv ? 'Ta fram ur arkivet' : 'Arkivera';
+    $('redArkiv').setAttribute('aria-label', $('redArkiv').title);
+    $('redAndrad').textContent = redNy ? '' : 'Ändrad ' + datumTid(red.andrad);
+    dlg.showModal();
+    visaTyp();
+    if (redNy) (somLista ? dlg.querySelector('.red-lista input[type=text]') : $('redText')).focus();
+  }
+  function samla(){
+    red.titel = $('redTitel').value.trim();
+    if (red.lista) red.lista = red.lista.filter(function(p){ return p.text.trim(); }).map(function(p){ return { id: p.id, text: p.text.trim(), klar: !!p.klar }; });
+    else red.text = $('redText').value.replace(/\s+$/, '');
+  }
+  function arTom(n){ return !n.titel && !(n.text || '').trim() && !(n.lista && n.lista.length); }
+  function stang(){
+    if (!red) return;
+    samla();
+    var r = red; red = null;
+    if (arTom(r)) {
+      if (!redNy) taBortNot(r.id, true);
+      return;
+    }
+    if (JSON.stringify(r) === redOrginal) return;
+    r.andrad = Date.now();
+    if (redNy) notes.push(r);
+    else notes = notes.map(function(n){ return n.id === r.id ? r : n; });
+    markeraAndrat(); rita();
+  }
+  dlg.addEventListener('close', stang);
+  dlg.addEventListener('click', function(e){ if (e.target === dlg) dlg.close(); });
+
+  function taBortNot(id, tyst){
+    var n = notes.find(function(x){ return x.id === id; });
+    if (!n) return;
+    var fore = JSON.parse(JSON.stringify(n));
+    n.borttagen = true; n.andrad = Date.now();
+    markeraAndrat(); rita();
+    if (!tyst) meddela('Anteckningen togs bort.', function(){
+      fore.andrad = Date.now();
+      notes = notes.map(function(x){ return x.id === id ? fore : x; });
+      markeraAndrat(); rita();
+    });
+  }
+  $('redBort').onclick = function(){
+    var id = red.id, ny = redNy;
+    red = null; dlg.close();
+    if (!ny) taBortNot(id); else meddela('Anteckningen slängdes.');
+  };
+  $('redArkiv').onclick = function(){
+    samla();
+    if (arTom(red)) { red = null; dlg.close(); return; }
+    red.arkiv = !red.arkiv; if (red.arkiv) red.fast = false;
+    var arkiverad = red.arkiv, id = red.id;
+    redOrginal = '';  // tvinga sparning
+    dlg.close();
+    meddela(arkiverad ? 'Anteckningen arkiverades.' : 'Anteckningen togs fram ur arkivet.', function(){
+      var n = notes.find(function(x){ return x.id === id; });
+      if (n) { n.arkiv = !arkiverad; n.andrad = Date.now(); markeraAndrat(); rita(); }
+    });
+  };
+  $('nyText').onclick = function(){ oppna(null, false); };
+  $('nyLista').onclick = function(){ oppna(null, true); };
+
+  // ---------- Tema och inställningsfil ----------
+  var tema = LS.get('notes-tema') || 'auto';
+  var instSha = null;
+  function satTema(t, spara){
+    tema = (t === 'light' || t === 'dark') ? t : 'auto';
+    if (tema === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', tema);
+    LS.set('notes-tema', tema);
+    document.querySelectorAll('#tema button').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.t === tema ? 'true' : 'false'); });
+    if (spara) sparaInst(true);
+  }
+  document.querySelectorAll('#tema button').forEach(function(b){ b.onclick = function(){ satTema(b.dataset.t, true); }; });
+  function sparaInst(forsokIgen){
+    status('Sparar…');
+    sparaFil(INSTFIL, { format: 1, uppdaterad: new Date().toISOString(), tema: tema }, instSha, 'Uppdatera inställningar').then(function(r){
+      if (r.ok) return r.json().then(function(j){ instSha = j.content && j.content.sha; status('Sparat på GitHub', 'ok'); });
+      if ((r.status === 409 || r.status === 422) && forsokIgen) {
+        return hamtaFil(INSTFIL).then(function(f){ instSha = f.sha; return sparaInst(false); });
+      }
+      if (r.status === 403 || r.status === 404) { status('Kunde inte spara: token saknar skrivrätt till repot notes-data.', 'fel'); return; }
+      status('Kunde inte spara på GitHub (fel ' + r.status + ').', 'fel');
+    }).catch(function(){ status('Kunde inte spara: ingen internetanslutning. Temat finns kvar på den här enheten.', 'fel'); });
+  }
+  function laddaInst(){
+    return hamtaFil(INSTFIL).then(function(f){ instSha = f.sha; if (f.data && f.data.tema) satTema(f.data.tema, false); }).catch(function(){});
+  }
+  satTema(tema, false);
+
+  // ---------- Lås och lås upp ----------
+  function las(){
+    document.body.classList.add('last');
+    $('tokenNy').hidden = false; $('tokenFinns').hidden = true;
+    $('lista').innerHTML = '';
+  }
+  function lasUpp(){
+    document.body.classList.remove('last');
+    $('tokenNy').hidden = true; $('tokenFinns').hidden = false;
+    $('tokenFalt').value = '';
+    rita();
+  }
+  function start(){
+    if (!token) { las(); return; }
+    kollaToken().then(function(svar){
+      if (svar === 'ok') { LS.set('notes-token', token); LS.set('notes-upplast', '1'); lasUpp(); laddaInst(); laddaNotes(); }
+      else if (svar === 'natfel' && LS.get('notes-upplast') === '1') { lasUpp(); synkText('<span class="fel">Ingen internetanslutning. Visar anteckningarna som finns på den här enheten.</span>'); }
+      else { if (LS.get('notes-token') === token) LS.del('notes-token'); LS.del('notes-upplast'); token = null; las(); }
+    });
+  }
+
+  $('tokenSpara').onclick = function(){
+    var t = $('tokenFalt').value.trim();
+    if (!t) { status('Klistra in din token först.', 'fel'); return; }
+    var knapp = $('tokenSpara');
+    knapp.disabled = true; status('Kontrollerar token…');
+    token = t;
+    kollaToken().then(function(svar){
+      knapp.disabled = false;
+      if (svar === 'ok') {
+        LS.set('notes-token', t); LS.set('notes-upplast', '1'); LS.del('notes-utloggad');
+        status('Rätt token. Välkommen!', 'ok');
+        lasUpp(); laddaInst(); laddaNotes();
+      } else {
+        token = null;
+        status(svar === 'natfel' ? 'Ingen kontakt med GitHub. Kolla internet och försök igen.' : 'Fel token. Kontrollera att du kopierade hela token.', 'fel');
+      }
+    });
+  };
+  $('tokenFalt').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('tokenSpara').click(); });
+  $('tokenTaBort').onclick = function(){
+    LS.del('notes-token'); LS.del('notes-upplast'); LS.del('notes-cache'); LS.del('notes-osparat'); LS.set('notes-utloggad', '1');
+    notes = []; token = null;
+    status('Token och sparade anteckningar borttagna från den här enheten.');
+    las();
+  };
+
+  var instDlg = $('instDlg');
+  $('setBtn').onclick = function(){ status(''); instDlg.showModal(); };
+  $('stang').onclick = function(){ instDlg.close(); };
+  instDlg.addEventListener('click', function(e){ if (e.target === instDlg) instDlg.close(); });
+
+  // Hämta nytt när du kommer tillbaka till appen (t.ex. om du skrivit på en annan enhet).
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible' && token && !document.body.classList.contains('last') && !smutsig && !red) laddaNotes();
+  });
+
+  start();
+})();
+</script>
+</body>
+</html>
