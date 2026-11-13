@@ -53,6 +53,10 @@ body.last .top{justify-content:flex-end}
 .rub{margin:30px 6px 10px;font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
 .mur{columns:2;column-gap:12px}
 .lapp{break-inside:avoid;display:block;width:100%;margin:0 0 12px;text-align:left;border:0;border-radius:20px;background:var(--fc,var(--card));box-shadow:0 2px 0 var(--line);padding:14px 16px;cursor:pointer;position:relative;color:var(--ink)}
+.lapp{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.lapp.drar{opacity:.25}
+.lapp.flyter{position:fixed;z-index:90;margin:0;pointer-events:none;transform:scale(1.04) rotate(-1deg);box-shadow:0 14px 34px rgba(0,0,0,.3);transition:none}
+body.drar{-webkit-user-select:none;user-select:none;cursor:grabbing}
 .lapp.std{box-shadow:0 0 0 2px var(--line) inset,0 2px 0 var(--line)}
 .lapp b.t{display:block;font-weight:800;font-size:1.02rem;line-height:1.3;margin-right:22px;overflow-wrap:anywhere}
 .lapp .x{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem;line-height:1.45;margin-top:4px;display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;overflow:hidden}
@@ -377,22 +381,23 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     }
     return h + '</button>';
   }
+  function pos(n){ return n.pos != null ? n.pos : (n.andrad || 0); }
   function rita(){
     var q = $('sok').value.trim().toLowerCase();
     var synliga = notes.filter(function(n){ return !n.borttagen && (vy === 'arkiv' ? n.arkiv : !n.arkiv) && matchar(n, q); });
-    synliga.sort(function(a, b){ return (b.andrad || 0) - (a.andrad || 0); });
+    synliga.sort(function(a, b){ return pos(b) - pos(a); });
     $('nyRuta').hidden = vy === 'arkiv';
     var h = '';
     if (vy === 'arkiv') {
-      h = synliga.length ? '<p class="rub">Arkiverade</p><div class="mur">' + synliga.map(lappHtml).join('') + '</div>' : '<p class="rub">Arkiverade</p><p class="tomt">' + (q ? 'Inga träffar i arkivet.' : 'Arkivet är tomt.') + '</p>';
+      h = synliga.length ? '<p class="rub">Arkiverade</p><div class="mur" data-sek="arkiv">' + synliga.map(lappHtml).join('') + '</div>' : '<p class="rub">Arkiverade</p><p class="tomt">' + (q ? 'Inga träffar i arkivet.' : 'Arkivet är tomt.') + '</p>';
     } else {
       var fasta = synliga.filter(function(n){ return n.fast; }), ovriga = synliga.filter(function(n){ return !n.fast; });
-      if (fasta.length) h += '<p class="rub">Fästa</p><div class="mur">' + fasta.map(lappHtml).join('') + '</div>';
-      if (ovriga.length) h += (fasta.length ? '<p class="rub">Övriga</p>' : '<div style="height:18px"></div>') + '<div class="mur">' + ovriga.map(lappHtml).join('') + '</div>';
+      if (fasta.length) h += '<p class="rub">Fästa</p><div class="mur" data-sek="fasta">' + fasta.map(lappHtml).join('') + '</div>';
+      if (ovriga.length) h += (fasta.length ? '<p class="rub">Övriga</p>' : '<div style="height:18px"></div>') + '<div class="mur" data-sek="ovriga">' + ovriga.map(lappHtml).join('') + '</div>';
       if (!synliga.length) h = '<p class="tomt">' + (q ? 'Inga träffar.' : 'Inga anteckningar än. Tryck på Skriv en anteckning för att börja.') + '</p>';
     }
     $('lista').innerHTML = h;
-    $('lista').querySelectorAll('.lapp').forEach(function(b){ b.onclick = function(){ oppna(b.dataset.id); }; });
+    $('lista').querySelectorAll('.lapp').forEach(function(b){ b.onclick = function(){ if (nyssDragen) return; oppna(b.dataset.id); }; kopplaDrag(b); });
   }
 
   $('sok').addEventListener('input', rita);
@@ -403,6 +408,88 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       rita();
     };
   });
+
+  // ---------- Långtryck och flytta ----------
+  var nyssDragen = false, drag = null;
+  function kopplaDrag(el){
+    el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    el.addEventListener('pointerdown', function(e){
+      if (e.button !== 0 || drag) return;
+      var startX = e.clientX, startY = e.clientY;
+      var timer = setTimeout(function(){ borjaDra(el, e.pointerId, startX, startY); }, 450);
+      function avbryt(){ clearTimeout(timer); el.removeEventListener('pointermove', rorelse); el.removeEventListener('pointerup', avbryt); el.removeEventListener('pointercancel', avbryt); }
+      function rorelse(ev){ if (Math.abs(ev.clientX - startX) > 8 || Math.abs(ev.clientY - startY) > 8) avbryt(); }
+      el.addEventListener('pointermove', rorelse);
+      el.addEventListener('pointerup', avbryt);
+      el.addEventListener('pointercancel', avbryt);
+      el._avbrytTryck = avbryt;
+    });
+  }
+  function borjaDra(el, pid, x, y){
+    if (el._avbrytTryck) el._avbrytTryck();
+    var r = el.getBoundingClientRect();
+    var flyt = el.cloneNode(true);
+    flyt.classList.add('flyter');
+    flyt.style.width = r.width + 'px'; flyt.style.left = r.left + 'px'; flyt.style.top = r.top + 'px';
+    document.body.appendChild(flyt);
+    el.classList.add('drar');
+    document.body.classList.add('drar');
+    if (navigator.vibrate) { try { navigator.vibrate(25); } catch(e){} }
+    drag = { el: el, flyt: flyt, sek: el.parentNode, dx: x - r.left, dy: y - r.top, x: x, y: y, raf: 0 };
+    window.addEventListener('pointermove', dragRor);
+    window.addEventListener('pointerup', slapp);
+    window.addEventListener('pointercancel', slapp);
+    autoScroll();
+  }
+  function dragRor(e){
+    if (!drag) return;
+    drag.x = e.clientX; drag.y = e.clientY;
+    drag.flyt.style.left = (e.clientX - drag.dx) + 'px';
+    drag.flyt.style.top = (e.clientY - drag.dy) + 'px';
+    placera();
+  }
+  function placera(){
+    var under = document.elementFromPoint(drag.x, drag.y);
+    var mal = under && under.closest ? under.closest('.lapp') : null;
+    if (!mal || mal === drag.el || mal.parentNode !== drag.sek) return;
+    var r = mal.getBoundingClientRect();
+    if (drag.y < r.top + r.height / 2) drag.sek.insertBefore(drag.el, mal);
+    else drag.sek.insertBefore(drag.el, mal.nextSibling);
+  }
+  function autoScroll(){
+    if (!drag) return;
+    var kant = 70, fart = 0;
+    if (drag.y < kant) fart = -Math.ceil((kant - drag.y) / 6);
+    else if (drag.y > innerHeight - kant) fart = Math.ceil((drag.y - (innerHeight - kant)) / 6);
+    if (fart) { window.scrollBy(0, fart); placera(); }
+    drag.raf = requestAnimationFrame(autoScroll);
+  }
+  // Hindra att sidan scrollar medan du drar på mobilen.
+  document.addEventListener('touchmove', function(e){ if (drag && e.cancelable) e.preventDefault(); }, { passive: false });
+  function slapp(){
+    if (!drag) return;
+    var d = drag; drag = null;
+    cancelAnimationFrame(d.raf);
+    window.removeEventListener('pointermove', dragRor);
+    window.removeEventListener('pointerup', slapp);
+    window.removeEventListener('pointercancel', slapp);
+    d.flyt.remove();
+    d.el.classList.remove('drar');
+    document.body.classList.remove('drar');
+    nyssDragen = true; setTimeout(function(){ nyssDragen = false; }, 350);
+    // Ge anteckningarna i den här gruppen nya platser, i den ordning de nu ligger.
+    var idn = Array.prototype.map.call(d.sek.querySelectorAll('.lapp'), function(x){ return x.dataset.id; });
+    var lista = idn.map(function(id){ return notes.find(function(n){ return n.id === id; }); }).filter(Boolean);
+    var platser = lista.map(pos).sort(function(a, b){ return b - a; });
+    var andrat = false, nu = Date.now();
+    lista.forEach(function(n, i){
+      if (pos(n) !== platser[i] || n.pos == null) { n.pos = platser[i]; n.andrad = nu; andrat = true; }
+    });
+    // Om två anteckningar hade samma plats: sprid ut dem.
+    for (var i = 1; i < lista.length; i++) if (lista[i].pos >= lista[i-1].pos) { lista[i].pos = lista[i-1].pos - 1; lista[i].andrad = nu; andrat = true; }
+    if (andrat) markeraAndrat();
+    rita();
+  }
 
   // ---------- Redigera ----------
   var red = null, redNy = false, redOrginal = '';
@@ -517,7 +604,8 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     }
     if (JSON.stringify(r) === redOrginal) return;
     r.andrad = Date.now();
-    if (redNy) notes.push(r);
+    if (redNy) { r.pos = Date.now(); notes.push(r); }
+    else if (r.pos == null) r.pos = pos(notes.find(function(n){ return n.id === r.id; }) || r);
     else notes = notes.map(function(n){ return n.id === r.id ? r : n; });
     markeraAndrat(); rita();
   }
