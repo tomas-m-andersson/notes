@@ -386,7 +386,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     $('nyRuta').hidden = vy === 'arkiv';
     var h = '';
     if (vy === 'arkiv') {
-      h = synliga.length ? '<div class="mur">' + synliga.map(lappHtml).join('') + '</div>' : '<p class="tomt">' + (q ? 'Inga träffar i arkivet.' : 'Arkivet är tomt.') + '</p>';
+      h = synliga.length ? '<p class="rub">Arkiverade</p><div class="mur">' + synliga.map(lappHtml).join('') + '</div>' : '<p class="rub">Arkiverade</p><p class="tomt">' + (q ? 'Inga träffar i arkivet.' : 'Arkivet är tomt.') + '</p>';
     } else {
       var fasta = synliga.filter(function(n){ return n.fast; }), ovriga = synliga.filter(function(n){ return !n.fast; });
       if (fasta.length) h += '<p class="rub">Fästa</p><div class="mur">' + fasta.map(lappHtml).join('') + '</div>';
